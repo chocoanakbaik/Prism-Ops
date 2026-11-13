@@ -1,12 +1,12 @@
-# Prism Vanguard
+# Prism Ops
 
 **A first-person shooter game by Prism Gaming Studios.**
 
-Prism Vanguard is a first-person shooter project developed by **Prism Gaming Studios**, an independent game studio within the **The Choco Studios (TCS) ecosystem**.
+Prism Ops is a first-person shooter project developed by **Prism Gaming Studios**, an independent game studio within the **The Choco Studios (TCS) ecosystem**.
 
 ## About the Project
 
-This repository contains the foundation and future development materials for Prism Vanguard, including its application source, game systems, assets, and documentation as those components are implemented.
+This repository contains the foundation and future development materials for Prism Ops, including its application source, game systems, assets, and documentation as those components are implemented.
 
 The project is being developed incrementally. Gameplay features, supported platforms, technical requirements, and release details will be documented only after they have been established and verified.
 
@@ -86,4 +86,4 @@ The repository currently contains the initial tooling and deployment foundation.
 
 - **Studio:** Prism Gaming Studios
 - **Ecosystem:** The Choco Studios
-- **Project:** Prism Vanguard
+- **Project:** Prism Ops
