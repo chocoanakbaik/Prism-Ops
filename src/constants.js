@@ -1,10 +1,10 @@
 // ============================================
-// PRISM OPS — Global Constants
+// PRISM OPS — Global Constants (Black & White)
 // ============================================
 
 export const APP = {
   name: 'Prism Ops',
-  version: '0.3.0',
+  version: '0.4.0',
   studio: 'Prism Gaming Studios'
 };
 
@@ -41,8 +41,8 @@ export const CAMERA_CFG = {
 export const ARENA_CFG = {
   size: 100,
   wallHeight: 6,
-  fogColor: 0x0a0e1a,
-  bgColor: 0x0a0e1a
+  fogColor: 0x0a0a0a,
+  bgColor: 0x0a0a0a
 };
 
 export const GRAPHICS_PRESETS = {
@@ -71,13 +71,5 @@ export const BOT_DIFFICULTY = {
 export const BOT_STATES = {
   PATROL: 'PATROL',
   HUNT: 'HUNT',
-  ATTACK: 'ATTACK',
-  FLANK: 'FLANK',
-  RETREAT: 'RETREAT'
-};
-
-export const STORAGE_KEYS = {
-  settings: 'prism_settings_v1',
-  profile: 'prism_profile_v1',
-  session: 'prism_session_v1'
+  ATTACK: 'ATTACK'
 };
