@@ -1,18 +1,19 @@
 {
   "name": "prism-ops",
-  "version": "0.1.0",
   "private": true,
-  "description": "Prism Ops FPS game project by Prism Gaming Studios.",
+  "version": "0.3.0",
   "type": "module",
+  "description": "Prism Ops — Tactical FPS powered by Prism Gaming Studios",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
   },
-  "devDependencies": {
-    "vite": "^7.1.12"
+  "dependencies": {
+    "three": "^0.160.0",
+    "@supabase/supabase-js": "^2.39.0"
   },
-  "engines": {
-    "node": ">=20.19.0"
+  "devDependencies": {
+    "vite": "^5.0.0"
   }
 }
