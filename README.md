@@ -1,41 +1,33 @@
-# TCS Finance & Cashflow Pro
+# Prism Vanguard
 
-**Perangkat pencatatan arus kas dan ringkasan keuangan untuk usaha kecil.**
+**A first-person shooter game by Prism Gaming Studios.**
 
-- **Penerbit:** The Choco Studios (TCS)
-- **Bahasa utama:** Bahasa Indonesia
-- **Sasaran pengguna:** UMKM dan pemilik usaha
-- **Kategori:** Pencatatan keuangan operasional
+Prism Vanguard is a first-person shooter project developed by **Prism Gaming Studios**, an independent game studio within **The Choco Studios (TCS) ecosystem**.
 
-## Ringkasan
+## About the Project
 
-TCS Finance & Cashflow Pro dirancang untuk membantu usaha mencatat uang masuk dan keluar, mengelompokkan transaksi, dan meninjau pergerakan arus kas dalam periode tertentu. Tujuannya adalah memberi gambaran operasional yang lebih tertata, bukan menggantikan sistem akuntansi profesional.
+Prism Vanguard is the home repository for the game's development: its source code, assets, documentation, and related project files will be maintained here as development progresses.
 
-## Ruang lingkup produk
+This repository is being repurposed for Prism Vanguard. It no longer represents the former TCS Finance & Cashflow Pro project.
 
-Produk ditujukan untuk mencakup pencatatan transaksi, kategori pemasukan dan pengeluaran, ringkasan periode, serta laporan atau ekspor sesuai implementasi yang tersedia. Fitur aktual wajib diverifikasi dari file aplikasi dan paket rilis.
+## Studio
 
-## Cara memulai
+**Prism Gaming Studios** is an independent game studio focused on creating games and exploring interactive experiences. As part of the TCS ecosystem, Prism Gaming Studios participates in an open, collaborative, and continuously evolving creative environment while preserving its own identity, creative direction, and approach to game development.
 
-1. Unduh paket rilis resmi dan baca panduannya.
-2. Atur kategori dan saldo awal jika fitur tersebut tersedia.
-3. Masukkan transaksi dengan tanggal, nilai, kategori, dan keterangan yang benar.
-4. Periksa laporan terhadap catatan sumber.
-5. Buat cadangan data secara berkala dan uji pemulihannya.
+**Studio tagline:** *Play Beyond the Ordinary.*
 
-## Batasan penting
+## Project Status
 
-Ringkasan arus kas bukan otomatis laporan keuangan yang sesuai standar akuntansi, laporan pajak, atau nasihat investasi. Jangan mengambil keputusan penting hanya dari data yang belum direkonsiliasi. Pastikan perlakuan biaya, pajak, utang, piutang, dan aset sesuai kebutuhan usaha.
+Prism Vanguard is a game development project. Specific gameplay systems, supported platforms, technical requirements, and release information will be documented here as they are established and verified.
 
-## Privasi dan keamanan
+## Repository
 
-Data keuangan merupakan informasi sensitif. Batasi akses perangkat dan file, simpan cadangan di lokasi aman, dan hindari mengirim data transaksi ke pihak yang tidak dipercaya.
+This repository is intended to contain the official development materials for Prism Vanguard. Changes and contributions should follow the project's documentation and repository guidelines as they become available.
 
-## Dokumentasi
+## Ecosystem
 
-Baca manual, lisensi, changelog, dan informasi batasan yang tersedia pada rilis.
+Prism Gaming Studios is part of **The Choco Studios (TCS)** ecosystem.
 
-## Penerbit
-
-**The Choco Studios (TCS)**  
-Kontak: thechocostudio@gmail.com
+- **Studio:** Prism Gaming Studios
+- **Ecosystem:** The Choco Studios
+- **Project:** Prism Vanguard
