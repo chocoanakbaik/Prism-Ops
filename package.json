@@ -1,8 +1,8 @@
 {
-  "name": "prism-vanguard",
+  "name": "prism-ops",
   "version": "0.1.0",
   "private": true,
-  "description": "Prism Vanguard FPS game project by Prism Gaming Studios.",
+  "description": "Prism Ops FPS game project by Prism Gaming Studios.",
   "type": "module",
   "scripts": {
     "dev": "vite",
