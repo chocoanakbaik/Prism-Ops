@@ -8,6 +8,7 @@ import { CollisionWorld } from '../world/Collision.js';
 import { Player } from '../entities/Player.js';
 import { Bot } from '../entities/Bot.js';
 import { HUD } from '../ui/HUD.js';
+import { TouchControls } from '../ui/TouchControls.js';
 import { Rifle } from '../weapons/Rifle.js';
 import { arena01 } from '../world/maps/arena01.js';
 import { GRAPHICS_PRESETS, WEAPON_CFG } from '../constants.js';
@@ -24,14 +25,14 @@ export class Game {
     this.rifle = null;
     this.bots = [];
     this.hud = null;
+    this.touch = null;
     this.loop = null;
     this.input = null;
     this.audio = null;
-    this.botCount = 3;
-    this.botDifficulty = 2;
+    this.botCount = 1;
+    this.botDifficulty = 1;
     this._fpsEl = null;
     this._firing = false;
-    this._firedThisPress = false;
     this._tracers = [];
   }
 
@@ -45,18 +46,20 @@ export class Game {
     this._addFPS();
     this.state = 'playing';
     this.hud.show();
+    if (this.input.isTouch) {
+      this.touch = new TouchControls(this.input);
+      this.touch.show();
+    }
     this._startMatch();
     this.loop.start();
   }
 
   _createScene() { this.scene = new Scene(this.root, this.graphicsPreset); }
-
   _createArena() {
     this.collision = new CollisionWorld();
     this.arena = new Arena(this.scene.scene, this.collision);
     this.arena.build(arena01, GRAPHICS_PRESETS[this.graphicsPreset]);
   }
-
   _createEntities() {
     this.player = new Player(this.scene.camera, this.collision);
     this.rifle = new Rifle(this.scene.camera);
@@ -68,36 +71,31 @@ export class Game {
   _createInput() {
     this.input = new Input(this.scene.renderer.domElement);
     const unlockAudio = () => {
-      if (this.audio) {
-        this.audio.init();
-        this.audio.resume();
-      }
-      this.scene.renderer.domElement.removeEventListener('mousedown', unlockAudio);
-      this.scene.renderer.domElement.removeEventListener('touchstart', unlockAudio);
+      if (this.audio) { this.audio.init(); this.audio.resume(); }
+      window.removeEventListener('mousedown', unlockAudio);
+      window.removeEventListener('touchstart', unlockAudio);
+      window.removeEventListener('keydown', unlockAudio);
     };
-    this.scene.renderer.domElement.addEventListener('mousedown', unlockAudio);
-    this.scene.renderer.domElement.addEventListener('touchstart', unlockAudio, { passive: true });
+    window.addEventListener('mousedown', unlockAudio);
+    window.addEventListener('touchstart', unlockAudio, { passive: true });
+    window.addEventListener('keydown', unlockAudio);
+
     this.input.onLook = (dx, dy) => {
-      if (!this.input.pointerLocked) return;
-      const sens = 0.0022;
+      if (!this.input.pointerLocked && !this.input.isTouch) return;
+      const sens = this.input.isTouch ? 0.004 : 0.0022;
       this.player.yaw -= dx * sens;
       this.player.pitch -= dy * sens;
       this.player.pitch = Math.max(-Math.PI/2+0.05, Math.min(Math.PI/2-0.05, this.player.pitch));
     };
+
     this.input.onKey = (key, isDown) => {
       if (key === 'j' || key === ' ') {
         this._firing = isDown;
-        if (isDown) this._firedThisPress = false;
       }
       if (key === 'r') this.player.startReload();
     };
-    this.input.onShoot = () => {
-      this._firing = true;
-      this._firedThisPress = false;
-    };
-    document.addEventListener('mouseup', e => {
-      if (e.button === 0) this._firing = false;
-    });
+    this.input.onShoot = () => { this._firing = true; };
+    document.addEventListener('mouseup', e => { if (e.button === 0) this._firing = false; });
   }
 
   _createAudio() { this.audio = new Audio(); }
@@ -138,25 +136,25 @@ export class Game {
         this._tracers.splice(i, 1);
       }
     }
+
     if (this.state === 'playing') {
       this.player.update(dt, this.input, this.audio);
       this.rifle.update(dt);
       for (const bot of this.bots) bot.update(dt, this.player, this.audio);
-      if (this._firing && this.player.hp > 0) {
-        if (this.input.pointerLocked || this.input.isTouch) {
-          const shot = this.player.shoot();
-          if (shot) {
-            this.audio.play('gunshot', 0.2);
-            this._doRaycast();
-          }
+
+      if (this.input.touchButtons.reload) { this.player.startReload(); this.input.touchButtons.reload = false; }
+
+      if ((this._firing || this.input.touchButtons.fire) && this.player.hp > 0) {
+        const shot = this.player.shoot();
+        if (shot) {
+          this.audio.play('gunshot', 0.2);
+          this._doRaycast();
         }
       }
+
       if (this.player.hp <= 0) {
         setTimeout(() => {
-          if (this.player.hp <= 0) {
-            this.player.respawn();
-            this._startMatch();
-          }
+          if (this.player.hp <= 0) { this.player.respawn(); this._startMatch(); }
         }, 2000);
       }
       this.hud.update(this.player);
