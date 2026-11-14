@@ -5,10 +5,8 @@ export class Bot {
   constructor(scene, collision, spawnPos, difficulty = 2) {
     this.scene = scene;
     this.collision = collision;
-    this.difficulty = difficulty;
     this.cfg = BOT_DIFFICULTY[difficulty];
-    this.pos = spawnPos.clone();
-    this.pos.y = 0;
+    this.pos = spawnPos.clone(); this.pos.y = 0;
     this.alive = true;
     this.hp = this.cfg.hp;
     this.name = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
@@ -28,26 +26,18 @@ export class Bot {
     const bodyMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
     const headMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
     const gunMat  = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.4, metalness: 0.8 });
-
     this.bodyMesh = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.2, 0.4), bodyMat);
     this.bodyMesh.position.y = 1.0;
     this.mesh.add(this.bodyMesh);
-
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 10), headMat);
     head.position.y = 1.85;
     this.mesh.add(head);
-
     const gun = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.6), gunMat);
     gun.position.set(0.35, 1.2, 0.3);
     this.mesh.add(gun);
-
-    this.muzzleFlash = new THREE.Mesh(
-      new THREE.SphereGeometry(0.15, 6, 6),
-      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 })
-    );
+    this.muzzleFlash = new THREE.Mesh(new THREE.SphereGeometry(0.15, 6, 6), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 }));
     this.muzzleFlash.position.set(0.35, 1.2, 0.6);
     this.mesh.add(this.muzzleFlash);
-
     this.mesh.position.copy(this.pos);
     this.scene.add(this.mesh);
   }
@@ -70,7 +60,7 @@ export class Bot {
     if (hasLOS && distToPlayer < this.cfg.viewRange) {
       this.lastSeenTime = now;
       if (this.state !== BOT_STATES.ATTACK) {
-        this.reactionTimer = this.cfg.reactionTime;
+        this.reactionTimer = this.cfg.reactionTime + 0.4;
         this.state = BOT_STATES.ATTACK;
       }
     } else if (this.state === BOT_STATES.ATTACK && now - this.lastSeenTime > 1.5) {
@@ -97,17 +87,16 @@ export class Bot {
         const moveX = perp.x * this.cfg.speed * 0.5 * dt;
         const moveZ = perp.z * this.cfg.speed * 0.5 * dt;
         const res = this.collision.resolveMove(this.pos.x, this.pos.z, moveX, moveZ, 0.5);
-        this.pos.x = res.x;
-        this.pos.z = res.z;
+        this.pos.x = res.x; this.pos.z = res.z;
       }
       if (this.reactionTimer > 0) {
         this.reactionTimer -= dt;
       } else if (hasLOS && now - this.lastFire > this.cfg.fireRate) {
         this.lastFire = now;
         this._fireEffect(audio);
-        const hitChance = this.cfg.accuracy * Math.max(0.15, 1 - distToPlayer / this.cfg.viewRange);
+        const hitChance = (this.cfg.accuracy * 0.6) * Math.max(0.15, 1 - distToPlayer / this.cfg.viewRange);
         if (Math.random() < hitChance) {
-          player.takeDamage(this.cfg.damage);
+          player.takeDamage(Math.floor(this.cfg.damage * 0.5));
           if (audio) audio.play('hit', 0.1);
         }
       }
@@ -131,8 +120,7 @@ export class Bot {
     dir.normalize();
     const step = this.cfg.speed * dt;
     const res = this.collision.resolveMove(this.pos.x, this.pos.z, dir.x * step, dir.z * step, 0.5);
-    this.pos.x = res.x;
-    this.pos.z = res.z;
+    this.pos.x = res.x; this.pos.z = res.z;
     return false;
   }
 
@@ -145,9 +133,6 @@ export class Bot {
   takeDamage(amount) {
     if (!this.alive) return;
     this.hp -= amount;
-    if (this.hp <= 0) {
-      this.alive = false;
-      this.mesh.visible = false;
-    }
+    if (this.hp <= 0) { this.alive = false; this.mesh.visible = false; }
   }
 }
