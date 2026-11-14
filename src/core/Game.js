@@ -1,7 +1,3 @@
-// ============================================
-// Game Orchestrator — Batch 4 (Playable)
-// ============================================
-
 import * as THREE from 'three';
 import { Loop } from './Loop.js';
 import { Input } from './Input.js';
@@ -21,7 +17,6 @@ export class Game {
     this.root = root;
     this.state = 'boot';
     this.graphicsPreset = 'medium';
-    
     this.scene = null;
     this.arena = null;
     this.collision = null;
@@ -32,13 +27,12 @@ export class Game {
     this.loop = null;
     this.input = null;
     this.audio = null;
-    
     this.botCount = 3;
     this.botDifficulty = 2;
-    
     this._fpsEl = null;
     this._firing = false;
     this._firedThisPress = false;
+    this._tracers = [];
   }
 
   async boot() {
@@ -49,11 +43,9 @@ export class Game {
     this._createAudio();
     this._createLoop();
     this._addFPS();
-    
     this.state = 'playing';
     this.hud.show();
     this._startMatch();
-    
     this.loop.start();
   }
 
@@ -75,8 +67,16 @@ export class Game {
 
   _createInput() {
     this.input = new Input(this.scene.renderer.domElement);
-    
-    // Mouse look
+    const unlockAudio = () => {
+      if (this.audio) {
+        this.audio.init();
+        this.audio.resume();
+      }
+      this.scene.renderer.domElement.removeEventListener('mousedown', unlockAudio);
+      this.scene.renderer.domElement.removeEventListener('touchstart', unlockAudio);
+    };
+    this.scene.renderer.domElement.addEventListener('mousedown', unlockAudio);
+    this.scene.renderer.domElement.addEventListener('touchstart', unlockAudio, { passive: true });
     this.input.onLook = (dx, dy) => {
       if (!this.input.pointerLocked) return;
       const sens = 0.0022;
@@ -84,8 +84,6 @@ export class Game {
       this.player.pitch -= dy * sens;
       this.player.pitch = Math.max(-Math.PI/2+0.05, Math.min(Math.PI/2-0.05, this.player.pitch));
     };
-
-    // Keyboard shoot
     this.input.onKey = (key, isDown) => {
       if (key === 'j' || key === ' ') {
         this._firing = isDown;
@@ -93,8 +91,6 @@ export class Game {
       }
       if (key === 'r') this.player.startReload();
     };
-
-    // Mouse shoot
     this.input.onShoot = () => {
       this._firing = true;
       this._firedThisPress = false;
@@ -102,9 +98,6 @@ export class Game {
     document.addEventListener('mouseup', e => {
       if (e.button === 0) this._firing = false;
     });
-    
-    // Touch shoot (nanti disambung dari UI)
-    this.input.onPause = () => { /* pause menu nanti */ };
   }
 
   _createAudio() { this.audio = new Audio(); }
@@ -122,36 +115,33 @@ export class Game {
     this.player.respawn();
     this.player.kills = 0;
     this.player.deaths = 0;
-    
-    // Spawn Bots
     this.bots.forEach(b => this.scene.scene.remove(b.mesh));
     this.bots = [];
     const spawns = this.arena.getSpawns();
-    
     for (let i = 0; i < this.botCount; i++) {
       const sp = spawns[Math.floor(Math.random() * spawns.length)];
       const bot = new Bot(this.scene.scene, this.collision, new THREE.Vector3(sp.x, 0, sp.z), this.botDifficulty);
       this.bots.push(bot);
     }
-
-    // Lock pointer (kalau PC)
-    if (!this.input.isTouch) {
-      this.scene.renderer.domElement.requestPointerLock();
-    }
+    if (!this.input.isTouch) this.scene.renderer.domElement.requestPointerLock();
   }
 
   _tick(dt) {
+    for (let i = this._tracers.length - 1; i >= 0; i--) {
+      const t = this._tracers[i];
+      t.life -= dt;
+      t.line.material.opacity = Math.max(0, t.life * 5);
+      if (t.life <= 0) {
+        this.scene.scene.remove(t.line);
+        t.line.geometry.dispose();
+        t.line.material.dispose();
+        this._tracers.splice(i, 1);
+      }
+    }
     if (this.state === 'playing') {
-      // Player
       this.player.update(dt, this.input, this.audio);
       this.rifle.update(dt);
-
-      // Bots
-      for (const bot of this.bots) {
-        bot.update(dt, this.player, this.audio);
-      }
-
-      // Shooting logic (Auto fire)
+      for (const bot of this.bots) bot.update(dt, this.player, this.audio);
       if (this._firing && this.player.hp > 0) {
         if (this.input.pointerLocked || this.input.isTouch) {
           const shot = this.player.shoot();
@@ -161,8 +151,6 @@ export class Game {
           }
         }
       }
-
-      // Respawn logic
       if (this.player.hp <= 0) {
         setTimeout(() => {
           if (this.player.hp <= 0) {
@@ -171,11 +159,7 @@ export class Game {
           }
         }, 2000);
       }
-
-      // Update HUD
       this.hud.update(this.player);
-      
-      // Cleanup dead bots
       for (let i = this.bots.length - 1; i >= 0; i--) {
         if (!this.bots[i].alive) {
           this.scene.scene.remove(this.bots[i].mesh);
@@ -184,7 +168,6 @@ export class Game {
         }
       }
     }
-
     this.scene.render();
     if (this._fpsEl && this.loop) this._fpsEl.textContent = `${this.loop.fps} FPS`;
   }
@@ -193,27 +176,32 @@ export class Game {
     const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera(new THREE.Vector2(0, 0), this.scene.camera);
     raycaster.far = WEAPON_CFG.range;
-
-    // Kumpulin target (bot meshes + wall meshes)
     const targets = [...this.collision.meshes];
     for (const bot of this.bots) targets.push(bot.mesh);
-
     const hits = raycaster.intersectObjects(targets, true);
+    let endPos;
     if (hits.length > 0) {
-      const hit = hits[0];
-      // Cek apakah kena bot
+      endPos = hits[0].point.clone();
       for (const bot of this.bots) {
-        let obj = hit.object;
+        let obj = hits[0].object;
         while (obj) {
           if (obj === bot.mesh) {
             bot.takeDamage(WEAPON_CFG.damage);
             this.audio.play('hit', 0.1);
-            return;
+            break;
           }
           obj = obj.parent;
         }
       }
+    } else {
+      endPos = raycaster.ray.at(WEAPON_CFG.range, new THREE.Vector3());
     }
+    const startPos = new THREE.Vector3(0.28, -0.24, -0.55).applyMatrix4(this.scene.camera.matrixWorld);
+    const geo = new THREE.BufferGeometry().setFromPoints([startPos, endPos]);
+    const mat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1 });
+    const line = new THREE.Line(geo, mat);
+    this.scene.scene.add(line);
+    this._tracers.push({ line, life: 0.1 });
   }
 
   destroy() {
