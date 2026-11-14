@@ -9,9 +9,9 @@ import { Player } from '../entities/Player.js';
 import { Bot } from '../entities/Bot.js';
 import { HUD } from '../ui/HUD.js';
 import { TouchControls } from '../ui/TouchControls.js';
-import { Rifle } from '../weapons/Rifle.js';
+import { WeaponManager } from '../weapons/WeaponManager.js';
 import { arena01 } from '../world/maps/arena01.js';
-import { GRAPHICS_PRESETS, WEAPON_CFG } from '../constants.js';
+import { GRAPHICS_PRESETS } from '../constants.js';
 
 export class Game {
   constructor(root) {
@@ -22,7 +22,7 @@ export class Game {
     this.arena = null;
     this.collision = null;
     this.player = null;
-    this.rifle = null;
+    this.weapons = null;
     this.bots = [];
     this.hud = null;
     this.touch = null;
@@ -34,6 +34,7 @@ export class Game {
     this._fpsEl = null;
     this._firing = false;
     this._tracers = [];
+    this._respawnTimer = null;
   }
 
   async boot() {
@@ -54,24 +55,33 @@ export class Game {
     this.loop.start();
   }
 
-  _createScene() { this.scene = new Scene(this.root, this.graphicsPreset); }
+  _createScene() {
+    this.scene = new Scene(this.root, this.graphicsPreset);
+  }
+
   _createArena() {
     this.collision = new CollisionWorld();
     this.arena = new Arena(this.scene.scene, this.collision);
     this.arena.build(arena01, GRAPHICS_PRESETS[this.graphicsPreset]);
+    this.scene.renderer.toneMappingExposure = 1.2;
   }
+
   _createEntities() {
-    this.player = new Player(this.scene.camera, this.collision);
-    this.rifle = new Rifle(this.scene.camera);
-    this.player.rifle = this.rifle;
+    this.weapons = new WeaponManager(this.scene.camera);
+    this.player = new Player(this.scene.camera, this.collision, this.weapons);
     this.hud = new HUD();
     this.bots = [];
   }
 
   _createInput() {
     this.input = new Input(this.scene.renderer.domElement);
+    this.input.touchButtons.switch = false;
+
     const unlockAudio = () => {
-      if (this.audio) { this.audio.init(); this.audio.resume(); }
+      if (this.audio) {
+        this.audio.init();
+        this.audio.resume();
+      }
       window.removeEventListener('mousedown', unlockAudio);
       window.removeEventListener('touchstart', unlockAudio);
       window.removeEventListener('keydown', unlockAudio);
@@ -85,21 +95,28 @@ export class Game {
       const sens = this.input.isTouch ? 0.004 : 0.0022;
       this.player.yaw -= dx * sens;
       this.player.pitch -= dy * sens;
-      this.player.pitch = Math.max(-Math.PI/2+0.05, Math.min(Math.PI/2-0.05, this.player.pitch));
+      this.player.pitch = Math.max(-Math.PI / 2 + 0.05, Math.min(Math.PI / 2 - 0.05, this.player.pitch));
     };
 
     this.input.onKey = (key, isDown) => {
-      if (key === 'j' || key === ' ') {
-        this._firing = isDown;
-      }
-      if (key === 'r') this.player.startReload();
+      if (key === 'j' || key === ' ') this._firing = isDown;
+      if (isDown && key === 'r') this.weapons.startReload();
+      if (isDown && key === '1') this.weapons.switchWeapon('rifle');
+      if (isDown && key === '2') this.weapons.switchWeapon('pistol');
     };
     this.input.onShoot = () => { this._firing = true; };
-    document.addEventListener('mouseup', e => { if (e.button === 0) this._firing = false; });
+    document.addEventListener('mouseup', e => {
+      if (e.button === 0) this._firing = false;
+    });
   }
 
-  _createAudio() { this.audio = new Audio(); }
-  _createLoop() { this.loop = new Loop(dt => this._tick(dt)); }
+  _createAudio() {
+    this.audio = new Audio();
+  }
+
+  _createLoop() {
+    this.loop = new Loop(dt => this._tick(dt));
+  }
 
   _addFPS() {
     const fps = document.createElement('div');
@@ -111,14 +128,17 @@ export class Game {
 
   _startMatch() {
     this.player.respawn();
-    this.player.kills = 0;
-    this.player.deaths = 0;
-    this.bots.forEach(b => this.scene.scene.remove(b.mesh));
+    this.bots.forEach(bot => this.scene.scene.remove(bot.mesh));
     this.bots = [];
     const spawns = this.arena.getSpawns();
     for (let i = 0; i < this.botCount; i++) {
-      const sp = spawns[Math.floor(Math.random() * spawns.length)];
-      const bot = new Bot(this.scene.scene, this.collision, new THREE.Vector3(sp.x, 0, sp.z), this.botDifficulty);
+      const spawn = spawns[Math.floor(Math.random() * spawns.length)];
+      const bot = new Bot(
+        this.scene.scene,
+        this.collision,
+        new THREE.Vector3(spawn.x, 0, spawn.z),
+        this.botDifficulty
+      );
       this.bots.push(bot);
     }
     if (!this.input.isTouch) this.scene.renderer.domElement.requestPointerLock();
@@ -126,38 +146,56 @@ export class Game {
 
   _tick(dt) {
     for (let i = this._tracers.length - 1; i >= 0; i--) {
-      const t = this._tracers[i];
-      t.life -= dt;
-      t.line.material.opacity = Math.max(0, t.life * 5);
-      if (t.life <= 0) {
-        this.scene.scene.remove(t.line);
-        t.line.geometry.dispose();
-        t.line.material.dispose();
+      const tracer = this._tracers[i];
+      tracer.life -= dt;
+      tracer.line.material.opacity = Math.max(0, tracer.life * 5);
+      if (tracer.life <= 0) {
+        this.scene.scene.remove(tracer.line);
+        tracer.line.geometry.dispose();
+        tracer.line.material.dispose();
         this._tracers.splice(i, 1);
       }
     }
 
     if (this.state === 'playing') {
-      this.player.update(dt, this.input, this.audio);
-      this.rifle.update(dt);
+      this.player.update(dt, this.input);
+      this.weapons.update(dt);
       for (const bot of this.bots) bot.update(dt, this.player, this.audio);
 
-      if (this.input.touchButtons.reload) { this.player.startReload(); this.input.touchButtons.reload = false; }
+      if (this.input.touchButtons.reload) {
+        this.weapons.startReload();
+        this.input.touchButtons.reload = false;
+      }
+      if (this.input.touchButtons.switch) {
+        const next = this.weapons.currentKey === 'rifle' ? 'pistol' : 'rifle';
+        this.weapons.switchWeapon(next);
+        this.input.touchButtons.switch = false;
+      }
 
       if ((this._firing || this.input.touchButtons.fire) && this.player.hp > 0) {
-        const shot = this.player.shoot();
-        if (shot) {
+        if (this.weapons.shoot()) {
           this.audio.play('gunshot', 0.2);
           this._doRaycast();
         }
       }
 
-      if (this.player.hp <= 0) {
-        setTimeout(() => {
-          if (this.player.hp <= 0) { this.player.respawn(); this._startMatch(); }
+      if (this.player.hp <= 0 && this._respawnTimer === null) {
+        this._respawnTimer = setTimeout(() => {
+          this._respawnTimer = null;
+          if (this.player.hp <= 0) this._startMatch();
         }, 2000);
       }
-      this.hud.update(this.player);
+
+      this.hud.update({
+        hp: this.player.hp,
+        ammo: this.weapons.current.ammo,
+        reserve: this.weapons.current.reserve,
+        maxAmmo: this.weapons.current.maxAmmo,
+        reloading: this.weapons.reloading,
+        kills: this.player.kills,
+        deaths: this.player.deaths
+      });
+
       for (let i = this.bots.length - 1; i >= 0; i--) {
         if (!this.bots[i].alive) {
           this.scene.scene.remove(this.bots[i].mesh);
@@ -166,46 +204,54 @@ export class Game {
         }
       }
     }
+
     this.scene.render();
-    if (this._fpsEl && this.loop) this._fpsEl.textContent = `${this.loop.fps} FPS`;
+    if (this._fpsEl && this.loop) this._fpsEl.textContent = this.loop.fps + ' FPS';
   }
 
   _doRaycast() {
+    const weapon = this.weapons.current;
     const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera(new THREE.Vector2(0, 0), this.scene.camera);
-    raycaster.far = WEAPON_CFG.range;
+    raycaster.far = 120;
     const targets = [...this.collision.meshes];
     for (const bot of this.bots) targets.push(bot.mesh);
     const hits = raycaster.intersectObjects(targets, true);
     let endPos;
+
     if (hits.length > 0) {
       endPos = hits[0].point.clone();
       for (const bot of this.bots) {
-        let obj = hits[0].object;
-        while (obj) {
-          if (obj === bot.mesh) {
-            bot.takeDamage(WEAPON_CFG.damage);
+        let object = hits[0].object;
+        while (object) {
+          if (object === bot.mesh) {
+            bot.takeDamage(weapon.damage);
             this.audio.play('hit', 0.1);
             break;
           }
-          obj = obj.parent;
+          object = object.parent;
         }
       }
     } else {
-      endPos = raycaster.ray.at(WEAPON_CFG.range, new THREE.Vector3());
+      endPos = raycaster.ray.at(120, new THREE.Vector3());
     }
-    const startPos = new THREE.Vector3(0.28, -0.24, -0.55).applyMatrix4(this.scene.camera.matrixWorld);
-    const geo = new THREE.BufferGeometry().setFromPoints([startPos, endPos]);
-    const mat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1 });
-    const line = new THREE.Line(geo, mat);
+
+    this.scene.camera.updateMatrixWorld();
+    const startPos = new THREE.Vector3(0.25, -0.2, -0.5).applyMatrix4(this.scene.camera.matrixWorld);
+    const geometry = new THREE.BufferGeometry().setFromPoints([startPos, endPos]);
+    const material = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1 });
+    const line = new THREE.Line(geometry, material);
     this.scene.scene.add(line);
     this._tracers.push({ line, life: 0.1 });
   }
 
   destroy() {
     this.loop?.stop();
+    if (this._respawnTimer !== null) clearTimeout(this._respawnTimer);
+    this.touch?.hide();
     this.input?.destroy();
-    this.rifle?.dispose();
+    this.weapons?.dispose();
     this.scene?.destroy();
+    if (this._fpsEl?.parentNode) this._fpsEl.parentNode.removeChild(this._fpsEl);
   }
 }
