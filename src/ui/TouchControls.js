@@ -26,7 +26,7 @@ export class TouchControls {
     const btn = document.createElement('button');
     btn.id = id;
     btn.textContent = text;
-    btn.style.cssText = `position:absolute;right:${right}px;bottom:${bottom}px;width:${size}px;height:${size}px;border-radius:50%;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.5);color:#fff;font-weight:bold;font-family:monospace;font-size:12px;pointer-events:auto;user-select:none;-webkit-user-select:none;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);`;
+    btn.style.cssText = 'position:absolute;right:' + right + 'px;bottom:' + bottom + 'px;width:' + size + 'px;height:' + size + 'px;border-radius:50%;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.5);color:#fff;font-weight:bold;font-family:monospace;font-size:12px;pointer-events:auto;user-select:none;-webkit-user-select:none;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);';
     this.btnContainer.appendChild(btn);
     return btn;
   }
@@ -35,59 +35,63 @@ export class TouchControls {
     this.btnFire = this._makeBtn('btn-fire', 'FIRE', 20, 20, 80);
     this.btnReload = this._makeBtn('btn-reload', 'RLD', 110, 20, 50);
     this.btnJump = this._makeBtn('btn-jump', 'JMP', 20, 110, 50);
+    this.btnSwap = this._makeBtn('btn-swap', 'SWAP', 110, 80, 50);
   }
 
   _bindEvents() {
     this.joyZone.addEventListener('touchstart', e => {
       e.preventDefault();
-      const t = e.changedTouches[0];
-      this.input.touchJoystickStart(t.clientX, t.clientY);
+      const touch = e.changedTouches[0];
+      this.input.touchJoystickStart(touch.clientX, touch.clientY);
     }, { passive: false });
     this.joyZone.addEventListener('touchmove', e => {
       e.preventDefault();
-      const t = e.changedTouches[0];
-      this.input.touchJoystickMove(t.clientX, t.clientY);
+      const touch = e.changedTouches[0];
+      this.input.touchJoystickMove(touch.clientX, touch.clientY);
     }, { passive: false });
     this.joyZone.addEventListener('touchend', e => {
       e.preventDefault();
       this.input.touchJoystickEnd();
     }, { passive: false });
+    this.joyZone.addEventListener('touchcancel', () => this.input.touchJoystickEnd(), { passive: true });
 
     this.lookZone.addEventListener('touchstart', e => {
       e.preventDefault();
-      const t = e.changedTouches[0];
-      this.input.touchLookStart(t.clientX, t.clientY);
+      const touch = e.changedTouches[0];
+      this.input.touchLookStart(touch.clientX, touch.clientY);
     }, { passive: false });
     this.lookZone.addEventListener('touchmove', e => {
       e.preventDefault();
-      const t = e.changedTouches[0];
-      this.input.touchLookMove(t.clientX, t.clientY);
+      const touch = e.changedTouches[0];
+      this.input.touchLookMove(touch.clientX, touch.clientY);
     }, { passive: false });
     this.lookZone.addEventListener('touchend', e => {
       e.preventDefault();
       this.input.touchLookEnd();
     }, { passive: false });
+    this.lookZone.addEventListener('touchcancel', () => this.input.touchLookEnd(), { passive: true });
 
-    const bindBtn = (btn, onDown, onUp) => {
-      btn.addEventListener('touchstart', e => {
-        e.preventDefault();
-        btn.style.background = 'rgba(255,255,255,0.4)';
+    const bindButton = (button, onDown, onUp) => {
+      button.addEventListener('touchstart', event => {
+        event.preventDefault();
+        button.style.background = 'rgba(255,255,255,0.4)';
         onDown();
       }, { passive: false });
-      btn.addEventListener('touchend', e => {
-        e.preventDefault();
-        btn.style.background = 'rgba(255,255,255,0.15)';
+      button.addEventListener('touchend', event => {
+        event.preventDefault();
+        button.style.background = 'rgba(255,255,255,0.15)';
         if (onUp) onUp();
       }, { passive: false });
-      btn.addEventListener('touchcancel', e => {
-        btn.style.background = 'rgba(255,255,255,0.15)';
+      button.addEventListener('touchcancel', () => {
+        button.style.background = 'rgba(255,255,255,0.15)';
         if (onUp) onUp();
-      }, { passive: false });
+      }, { passive: true });
     };
 
-    bindBtn(this.btnFire, () => this.input.touchButtons.fire = true, () => this.input.touchButtons.fire = false);
-    bindBtn(this.btnReload, () => this.input.touchButtons.reload = true, () => this.input.touchButtons.reload = false);
-    bindBtn(this.btnJump, () => this.input.touchButtons.jump = true, () => this.input.touchButtons.jump = false);
+    bindButton(this.btnFire, () => this.input.touchButtons.fire = true, () => this.input.touchButtons.fire = false);
+    bindButton(this.btnReload, () => this.input.touchButtons.reload = true, () => this.input.touchButtons.reload = false);
+    bindButton(this.btnJump, () => this.input.touchButtons.jump = true, () => this.input.touchButtons.jump = false);
+    bindButton(this.btnSwap, () => this.input.touchButtons.switch = true, () => this.input.touchButtons.switch = false);
   }
 
   show() {
@@ -96,5 +100,9 @@ export class TouchControls {
 
   hide() {
     this.container.style.display = 'none';
+  }
+
+  destroy() {
+    if (this.container.parentNode) this.container.parentNode.removeChild(this.container);
   }
 }
