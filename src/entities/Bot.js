@@ -1,7 +1,3 @@
-// ============================================
-// Bot — AI Patrol, Hunt, Attack
-// ============================================
-
 import * as THREE from 'three';
 import { BOT_NAMES, BOT_DIFFICULTY, BOT_STATES } from '../constants.js';
 
@@ -11,36 +7,46 @@ export class Bot {
     this.collision = collision;
     this.difficulty = difficulty;
     this.cfg = BOT_DIFFICULTY[difficulty];
-
     this.pos = spawnPos.clone();
     this.pos.y = 0;
     this.alive = true;
     this.hp = this.cfg.hp;
     this.name = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
-    
     this.state = BOT_STATES.PATROL;
     this.target = this._randomWaypoint();
     this.lastFire = 0;
     this.lastSeenTime = 0;
     this.reactionTimer = 0;
-    
     this.mesh = null;
+    this.muzzleFlash = null;
+    this._walkTime = 0;
     this._buildMesh();
   }
 
   _buildMesh() {
     this.mesh = new THREE.Group();
-    // Warna bot: Hitam dengan outline putih (biar kelihatan)
     const bodyMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
     const headMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
+    const gunMat  = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.4, metalness: 0.8 });
 
-    const body = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.2, 0.4), bodyMat);
-    body.position.y = 1.0;
-    this.mesh.add(body);
+    this.bodyMesh = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.2, 0.4), bodyMat);
+    this.bodyMesh.position.y = 1.0;
+    this.mesh.add(this.bodyMesh);
 
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 10), headMat);
     head.position.y = 1.85;
     this.mesh.add(head);
+
+    const gun = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.6), gunMat);
+    gun.position.set(0.35, 1.2, 0.3);
+    this.mesh.add(gun);
+
+    this.muzzleFlash = new THREE.Mesh(
+      new THREE.SphereGeometry(0.15, 6, 6),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 })
+    );
+    this.muzzleFlash.position.set(0.35, 1.2, 0.6);
+    this.mesh.add(this.muzzleFlash);
 
     this.mesh.position.copy(this.pos);
     this.scene.add(this.mesh);
@@ -57,12 +63,10 @@ export class Bot {
 
   update(dt, player, audio) {
     if (!this.alive) return;
-
     const now = performance.now() / 1000;
     const distToPlayer = this.pos.distanceTo(player.pos);
     const hasLOS = this._checkLOS(player);
 
-    // State Transitions
     if (hasLOS && distToPlayer < this.cfg.viewRange) {
       this.lastSeenTime = now;
       if (this.state !== BOT_STATES.ATTACK) {
@@ -76,17 +80,18 @@ export class Bot {
       this.target = this._randomWaypoint();
     }
 
-    // State Execution
+    this._walkTime += dt * this.cfg.speed * 2;
+    const isMoving = this.state !== BOT_STATES.ATTACK || distToPlayer > 15;
+    this.bodyMesh.position.y = 1.0 + (isMoving ? Math.sin(this._walkTime) * 0.05 : 0);
+    this.bodyMesh.rotation.z = isMoving ? Math.sin(this._walkTime * 0.5) * 0.05 : 0;
+
     if (this.state === BOT_STATES.PATROL) {
       if (this._moveToward(this.target, dt)) this.target = this._randomWaypoint();
-    } 
-    else if (this.state === BOT_STATES.HUNT) {
+    } else if (this.state === BOT_STATES.HUNT) {
       this._moveToward(player.pos, dt);
-    } 
-    else if (this.state === BOT_STATES.ATTACK) {
+    } else if (this.state === BOT_STATES.ATTACK) {
       if (distToPlayer > 15) this._moveToward(player.pos, dt);
       else {
-        // Strafe kalau deket
         const dir = new THREE.Vector3().subVectors(player.pos, this.pos).normalize();
         const perp = new THREE.Vector3(-dir.z, 0, dir.x);
         const moveX = perp.x * this.cfg.speed * 0.5 * dt;
@@ -95,25 +100,28 @@ export class Bot {
         this.pos.x = res.x;
         this.pos.z = res.z;
       }
-
-      // Nembak
       if (this.reactionTimer > 0) {
         this.reactionTimer -= dt;
       } else if (hasLOS && now - this.lastFire > this.cfg.fireRate) {
         this.lastFire = now;
+        this._fireEffect(audio);
         const hitChance = this.cfg.accuracy * Math.max(0.15, 1 - distToPlayer / this.cfg.viewRange);
         if (Math.random() < hitChance) {
           player.takeDamage(this.cfg.damage);
           if (audio) audio.play('hit', 0.1);
         }
-        if (audio) audio.play('gunshot', 0.05);
       }
     }
 
-    // Update Visual
     this.mesh.position.copy(this.pos);
     const lookDir = new THREE.Vector3().subVectors(player.pos, this.pos);
     this.mesh.rotation.y = Math.atan2(lookDir.x, lookDir.z);
+    if (this.muzzleFlash.material.opacity > 0) this.muzzleFlash.material.opacity -= dt * 15;
+  }
+
+  _fireEffect(audio) {
+    if (audio) audio.play('gunshot', 0.05);
+    this.muzzleFlash.material.opacity = 1;
   }
 
   _moveToward(target, dt) {
