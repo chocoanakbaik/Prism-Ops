@@ -4,6 +4,7 @@ import { Input } from './Input.js';
 import { Audio } from './Audio.js';
 import { Scene } from '../world/Scene.js';
 import { Arena } from '../world/Arena.js';
+import { Environment } from '../world/Environment.js';
 import { CollisionWorld } from '../world/Collision.js';
 import { Player } from '../entities/Player.js';
 import { Bot } from '../entities/Bot.js';
@@ -20,6 +21,7 @@ export class Game {
     this.graphicsPreset = 'medium';
     this.scene = null;
     this.arena = null;
+    this.environment = null;
     this.collision = null;
     this.player = null;
     this.weapons = null;
@@ -63,6 +65,7 @@ export class Game {
     this.collision = new CollisionWorld();
     this.arena = new Arena(this.scene.scene, this.collision);
     this.arena.build(arena01, GRAPHICS_PRESETS[this.graphicsPreset]);
+    this.environment = new Environment(this.scene.scene);
     this.scene.renderer.toneMappingExposure = 1.2;
   }
 
@@ -145,6 +148,7 @@ export class Game {
   }
 
   _tick(dt) {
+    this.environment?.update(dt);
     for (let i = this._tracers.length - 1; i >= 0; i--) {
       const tracer = this._tracers[i];
       tracer.life -= dt;
@@ -252,6 +256,7 @@ export class Game {
     this.touch?.hide();
     this.input?.destroy();
     this.weapons?.dispose();
+    this.environment?.dispose();
     this.scene?.destroy();
     if (this._fpsEl?.parentNode) this._fpsEl.parentNode.removeChild(this._fpsEl);
   }
