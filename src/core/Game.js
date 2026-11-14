@@ -190,6 +190,7 @@ export class Game {
         hp: this.player.hp,
         ammo: this.weapons.current.ammo,
         reserve: this.weapons.current.reserve,
+        weapon: this.weapons.currentKey,
         maxAmmo: this.weapons.current.maxAmmo,
         reloading: this.weapons.reloading,
         kills: this.player.kills,
