@@ -1,18 +1,18 @@
 # Prism Ops
 
-**A first-person shooter game by Prism Gaming Studios.**
+**A first-person shooter project developed within Vornika+-, the game-development unit of The Choco Studios (TCS).**
 
-Prism Ops is a first-person shooter project developed by **Prism Gaming Studios**, an independent game studio within the **The Choco Studios (TCS) ecosystem**.
+The repository name is retained for historical continuity. Vornika+- is the current game-development identity; Prism Gaming Studios is its previous name.
 
-## About the Project
+## About the project
 
-This repository contains the foundation and future development materials for Prism Ops, including its application source, game systems, assets, and documentation as those components are implemented.
+Prism Ops is an early first-person shooter project. This repository currently contains the initial tooling and deployment foundation, not a completed game.
 
-The project is being developed incrementally. Gameplay features, supported platforms, technical requirements, and release details will be documented only after they have been established and verified.
+Gameplay systems, assets, engine selection, supported platforms, technical requirements, and release details must be documented only after they have been implemented and verified.
 
-## Technology Foundation
+## Technology foundation
 
-The initial project foundation uses:
+The current repository foundation uses:
 
 - **Vite** for the development server and production build.
 - **JavaScript ES modules** for project configuration.
@@ -20,7 +20,7 @@ The initial project foundation uses:
 
 The game engine, rendering stack, and gameplay architecture have not yet been specified in this repository.
 
-## Getting Started
+## Getting started
 
 ### Requirements
 
@@ -51,13 +51,13 @@ npm run build
 npm run preview
 ```
 
-## Environment Variables
+## Environment variables
 
 Copy `.env.example` to `.env.local` when local environment configuration is needed.
 
 Only variables prefixed with `VITE_` are exposed to browser-side code. Never put private keys, passwords, or server secrets in Vite client-side environment variables.
 
-## Project Structure
+## Project structure
 
 ```text
 .
@@ -72,18 +72,15 @@ Only variables prefixed with `VITE_` are exposed to browser-side code. Never put
 └── vite.config.js
 ```
 
-## Studio
+## Project status
 
-**Prism Gaming Studios** is an independent game studio within the TCS ecosystem, with its own identity and creative direction.
-
-**Studio tagline:** *Play Beyond the Ordinary.*
-
-## Project Status
-
-The repository currently contains the initial tooling and deployment foundation. It does not yet contain implemented FPS gameplay, game assets, or a selected game engine.
+The repository currently contains the initial tooling and deployment foundation. It does not yet contain implemented FPS gameplay, game assets, or a selected game engine. A successful Vite build must not be described as a playable game release.
 
 ## Ecosystem
 
-- **Studio:** Prism Gaming Studios
+- **Game-development unit:** Vornika+-
 - **Ecosystem:** The Choco Studios
 - **Project:** Prism Ops
+- **Historical unit name:** Prism Gaming Studios
+
+**Vornika+- — Play Beyond the Ordinary.**
