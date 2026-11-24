@@ -5,7 +5,7 @@
 export const APP = {
   name: 'Prism Ops',
   version: '0.4.0',
-  studio: 'Prism Gaming Studios'
+  studio: 'Vornika+'
 };
 
 export const PLAYER_CFG = {
