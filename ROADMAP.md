@@ -7,7 +7,7 @@ Ini yang bikin orang **nggak langsung uninstall**:
 1. **Main Menu lengkap** — Start, Settings, Profile, Leaderboard, Quit. Sekarang lu masih masuk game langsung.
 2. **Pause Menu** — ESC buat pause, resume, settings, quit to menu.
 3. **Game Over Screen** — tampilkan kills, deaths, K/D ratio, XP gained, tombol "Play Again" + "Main Menu".
-4. **Loading Screen** — logo Prism + tips + progress bar. Bikin kesan profesional.
+4. **Loading Screen** — logo Vornika+ + tips + progress bar. Bikin kesan profesional.
 5. **Countdown "3-2-1 GO"** sebelum match mulai — ini standar FPS.
 6. **Respawn screen** — "You were killed by [nama bot]" + tombol respawn.
 7. **Hitmarker** — crosshair berubah merah saat kena bot (feedback penting).
