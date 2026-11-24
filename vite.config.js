@@ -13,8 +13,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          three: ['three'],
-          supabase: ['@supabase/supabase-js']
+          three: ['three']
         }
       }
     }
