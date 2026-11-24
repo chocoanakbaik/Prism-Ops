@@ -1,6 +1,6 @@
 # Prism Ops
 
-**Prism Ops** is a browser-based first-person shooter prototype developed by **Vornika+**, the game-development unit within The Choco Studios (TCS) ecosystem. The repository name and game title remain Prism Ops; the former Prism Gaming Studios name is now Vornika+.
+**Prism Ops** is a browser-based first-person shooter prototype developed by **Vornika+**, the game-development unit within The Choco Studios (TCS) ecosystem. The repository name and game title remain Prism Ops; the former Vornika+ name is now Vornika+.
 
 ## Current implementation
 
@@ -72,7 +72,7 @@ The project should be treated as a development prototype. It is not documented a
 
 ## Vornika+ and TCS
 
-Vornika+ is the TCS game-development unit that voluntarily joined the TCS ecosystem from an independent origin. The previous name Prism Gaming Studios is retained only as historical context.
+Vornika+ is the TCS game-development unit that voluntarily joined the TCS ecosystem from an independent origin. The previous name Vornika+ is retained only as historical context.
 
 **Studio tagline:** *Play Beyond the Ordinary.*
 
